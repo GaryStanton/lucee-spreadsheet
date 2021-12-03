@@ -1,32 +1,47 @@
 <cfscript>
-describe( "shiftColumns",function(){
+describe( "shiftColumns", function(){
 
 	beforeEach( function(){
-		variables.workbook = s.new();
+		var data = QueryNew( "column1,column2,column3", "VarChar,VarChar,VarChar", [ [ "a", "c", "e" ], [ "b", "d", "f" ] ] );
+		var xls = s.workbookFromQuery( data, false );
+		var xlsx = s.workbookFromQuery( xmlFormat=true, data=data, addHeaderRow=false );
+		variables.workbooks = [ xls, xlsx ];
 	});
 
-	it( "Shifts columns right if offset is positive",function() {
-		s.addColumn( workbook,"a,b" );
-		s.addColumn( workbook,"c,d" );
-		s.shiftColumns( workbook,1,1,1 );
-		expected = querySim( "column1,column2
-			|a
-			|b
-		");
-		actual = s.sheetToQuery( workbook=workbook,includeBlankRows=true );
-		expect( actual ).toBe( expected );
+	it( "Shifts columns right if offset is positive", function(){
+		workbooks.Each( function( wb ){
+			s.shiftColumns( wb, 1, 2, 1 );
+			var expected = querySim( "column1,column2,column3
+				|a|c
+				|b|d
+			");
+			var actual = s.getSheetHelper().sheetToQuery( workbook=wb, includeBlankRows=true );
+			expect( actual ).toBe( expected );
+		});
 	});
 
-	it( "Shifts columns left if offset is negative",function() {
-		s.addColumn( workbook,"a,b" );
-		s.addColumn( workbook,"c,d" );
-		s.addColumn( workbook,"e,f" );
-		s.shiftColumns( workbook,2,2,-1 );
-		expected = querySim( "column1,column2,column3
-			c||e
-			d||f");
-		actual = s.sheetToQuery( workbook=workbook,includeBlankRows=true );
-		expect( actual ).toBe( expected );
+	it( "Shifts columns left if offset is negative", function(){
+		workbooks.Each( function( wb ){
+			s.addColumn( wb, "g,h" )//4th column to remain untouched
+				.shiftColumns( wb, 2, 3, -1 );
+			var expected = querySim( "column1,column2,column3,column4
+				c|e||g
+				d|f||h");
+			var actual = s.getSheetHelper().sheetToQuery( workbook=wb, includeBlankRows=true );
+			expect( actual ).toBe( expected );
+		});
+	});
+
+	it( "is chainable", function(){
+		workbooks.Each( function( wb ){
+			s.newChainable( wb ).shiftColumns( 1, 2, 1 );
+			var expected = querySim( "column1,column2,column3
+				|a|c
+				|b|d
+			");
+			var actual = s.getSheetHelper().sheetToQuery( workbook=wb, includeBlankRows=true );
+			expect( actual ).toBe( expected );
+		});
 	});
 
 });	

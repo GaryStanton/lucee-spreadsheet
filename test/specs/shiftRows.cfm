@@ -1,25 +1,40 @@
 <cfscript>
-describe( "shiftRows",function(){
+describe( "shiftRows", function(){
 
 	beforeEach( function(){
-		variables.rowData = QueryNew( "column1,column2","VarChar,VarChar",[ [ "a","b" ],[ "c","d" ] ] );
-		variables.workbook = s.new();
+		variables.workbooks = [ s.newXls(), s.newXlsx() ];
+		variables.rowData = QueryNew( "column1,column2", "VarChar,VarChar", [ [ "a", "b" ], [ "c", "d" ] ] );
 	});
 
-	it( "Shifts rows down if offset is positive",function() {
-		s.addRows( workbook,rowData );
-		s.shiftRows( workbook,1,1,1 );
-		expected = QueryNew( "column1,column2","VarChar,VarChar",[ [ "","" ],[ "a","b" ] ] );
-		actual = s.sheetToQuery( workbook=workbook,includeBlankRows=true );
-		expect( actual ).toBe( expected );
+	it( "Shifts rows down if offset is positive", function(){
+		workbooks.Each( function( wb ){
+			s.addRows( wb, rowData )
+				.shiftRows( wb, 1, 1, 1 );
+			var expected = QueryNew( "column1,column2", "VarChar,VarChar", [ [ "", "" ], [ "a", "b" ] ] );
+			var actual = s.getSheetHelper().sheetToQuery( workbook=wb, includeBlankRows=true );
+			expect( actual ).toBe( expected );
+		});
 	});
 
-	it( "Shifts rows up if offset is negative",function() {
-		s.addRows( workbook,rowData );
-		s.shiftRows( workbook,2,2,-1 );
-		expected = QueryNew( "column1,column2","VarChar,VarChar",[ [ "c","d" ] ] );
-		actual = s.sheetToQuery( workbook );
-		expect( actual ).toBe( expected );
+	it( "Shifts rows up if offset is negative", function(){
+		workbooks.Each( function( wb ){
+			s.addRows( wb, rowData )
+				.shiftRows( wb, 2, 2, -1 );
+			var expected = QueryNew( "column1,column2", "VarChar,VarChar", [ [ "c", "d" ] ] );
+			var actual = s.getSheetHelper().sheetToQuery( wb );
+			expect( actual ).toBe( expected );
+		});
+	});
+
+	it( "is chainable", function(){
+		workbooks.Each( function( wb ){
+			s.newChainable( wb )
+				.addRows( rowData )
+				.shiftRows( 1, 1, 1 );
+			var expected = QueryNew( "column1,column2", "VarChar,VarChar", [ [ "", "" ], [ "a", "b" ] ] );
+			var actual = s.getSheetHelper().sheetToQuery( workbook=wb, includeBlankRows=true );
+			expect( actual ).toBe( expected );
+		});
 	});
 
 });	

@@ -1,60 +1,70 @@
 <cfscript>	
-describe( "mergeCells",function(){
+describe( "mergeCells", function(){
 
 	beforeEach( function(){
 		var data = querySim(
 			"column1,column2
 			a|b
 			c|d");
-		workbook = s.workbookFromQuery( data,false );
+		var xls = s.workbookFromQuery( data, false );
+		var xlsx = s.workbookFromQuery( data=data, addHeaderRow=false, xmlFormat=true );
+		variables.workbooks = [ xls, xlsx ];
 	});
 
-	it( "Retains merged cell data by default",function() {
-		s.mergeCells( workbook,1,2,1,2 );
-		expect( s.getCellValue( workbook,1,1 ) ).toBe( "a" );
-		expect( s.getCellValue( workbook,1,2 ) ).toBe( "b" );
-		expect( s.getCellValue( workbook,2,1 ) ).toBe( "c" );
-		expect( s.getCellValue( workbook,2,2 ) ).toBe( "d" );
+	it( "Retains merged cell data by default", function(){
+		workbooks.Each( function( wb ){
+			s.mergeCells( wb, 1, 2, 1, 2 );
+			expect( s.getCellValue( wb, 1, 1 ) ).toBe( "a" );
+			expect( s.getCellValue( wb, 1, 2 ) ).toBe( "b" );
+			expect( s.getCellValue( wb, 2, 1 ) ).toBe( "c" );
+			expect( s.getCellValue( wb, 2, 2 ) ).toBe( "d" );
+		});
 	});
 
-	it( "Can empty all but the top-left-most cell of a merged region",function() {
-		s.mergeCells( workbook,1,2,1,2,true );
-		s.write( workbook,tempXlsPath,true );
-		expect( s.getCellValue( workbook,1,1 ) ).toBe( "a" );
-		expect( s.getCellValue( workbook,1,2 ) ).toBe( "" );
-		expect( s.getCellValue( workbook,2,1 ) ).toBe( "" );
-		expect( s.getCellValue( workbook,2,2 ) ).toBe( "" );
+	it( "Can empty all but the top-left-most cell of a merged region", function(){
+		workbooks.Each( function( wb ){
+			s.mergeCells( wb, 1, 2, 1, 2, true );
+			expect( s.getCellValue( wb, 1, 1 ) ).toBe( "a" );
+			expect( s.getCellValue( wb, 1, 2 ) ).toBe( "" );
+			expect( s.getCellValue( wb, 2, 1 ) ).toBe( "" );
+			expect( s.getCellValue( wb, 2, 2 ) ).toBe( "" );
+		});
 	});
 
-	describe( "mergeCells throws an exception if",function(){
+	it( "Is chainable", function(){
+		workbooks.Each( function( wb ){
+			s.newChainable( wb ).mergeCells( 1, 2, 1, 2 );
+			expect( s.getCellValue( wb, 1, 1 ) ).toBe( "a" );
+			expect( s.getCellValue( wb, 1, 2 ) ).toBe( "b" );
+			expect( s.getCellValue( wb, 2, 1 ) ).toBe( "c" );
+			expect( s.getCellValue( wb, 2, 2 ) ).toBe( "d" );
+		});
+	});
 
-		beforeEach( function(){
-			variables.workbook = s.new();
+	describe( "mergeCells throws an exception if", function(){
+
+		it( "startRow OR startColumn is less than 1", function(){
+			workbooks.Each( function( wb ){
+				expect( function(){
+					s.mergeCells( wb, 0, 0, 1, 2 );
+				}).toThrow( regex="Invalid" );
+				expect( function(){
+					s.mergeCells( wb, 1, 2, 0, 0 );
+				}).toThrow( regex="Invalid" );
+			});
 		});
 
-		it( "startRow OR startColumn is less than 1",function() {
-			expect( function(){
-				s.mergeCells( workbook,0,0,1,2 );
-			}).toThrow( regex="Invalid" );
-			expect( function(){
-				s.mergeCells( workbook,1,2,0,0 );
-			}).toThrow( regex="Invalid" );
+		it( "endRow/endColumn is less than startRow/startColumn", function(){
+			workbooks.Each( function( wb ){
+				expect( function(){
+					s.mergeCells( wb, 2, 1, 1, 2 );
+				}).toThrow( regex="Invalid" );
+				expect( function(){
+					s.mergeCells( wb, 1, 2, 2, 1 );
+				}).toThrow( regex="Invalid" );
+			});
 		});
 
-		it( "endRow/endColumn is less than startRow/startColumn",function() {
-			expect( function(){
-				s.mergeCells( workbook,2,1,1,2 );
-			}).toThrow( regex="Invalid" );
-			expect( function(){
-				s.mergeCells( workbook,1,2,2,1 );
-			}).toThrow( regex="Invalid" );
-		});
-
-	});
-
-	afterEach( function(){
-		if( FileExists( variables.tempXlsPath ) ) FileDelete( variables.tempXlsPath );
-		if( FileExists( variables.tempXlsxPath ) ) FileDelete( variables.tempXlsxPath );
 	});
 	
 });	

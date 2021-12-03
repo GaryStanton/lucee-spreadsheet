@@ -1,5 +1,5 @@
 <cfscript>
-describe( "printGridLines",function(){
+describe( "printGridLines", function(){
 
 	beforeEach( function(){
 		var columnData = [ "a", "b", "c" ];
@@ -7,25 +7,31 @@ describe( "printGridLines",function(){
 		var data = QueryNew( "c1,c2,c3", "VarChar,VarChar,VarChar", rowData );
 		variables.xls = s.workbookFromQuery( data, false );
 		variables.xlsx = s.workbookFromQuery( data=data, addHeaderRow=false, xmlformat=true );
-		makePublic( s, "getActiveSheet" );
-		variables.xlsSheet = s.getActiveSheet( xls );
-		variables.xlsxSheet = s.getActiveSheet( xlsx );
+		variables.workbooks = [ xls, xlsx ];
 	});
 
-	it( "can be added",function() {
-		s.addPrintGridLines( xls );
-		s.addPrintGridLines( xlsx );
-		expect( xlsSheet.isPrintGridlines() ).toBeTrue();
-		expect( xlsxSheet.isPrintGridlines() ).toBeTrue();
+	it( "can be added", function(){
+		workbooks.Each( function( wb ){
+			s.addPrintGridLines( wb );
+			expect( s.getSheetHelper().getActiveSheet( wb ).isPrintGridlines() ).toBeTrue();
+		});
 	});
 
-	it( "can be removed",function() {
-		s.addPrintGridLines( xls );
-		s.addPrintGridLines( xlsx );
-		s.removePrintGridLines( xls );
-		s.removePrintGridLines( xlsx );
-		expect( xlsSheet.isPrintGridlines() ).toBeFalse();
-		expect( xlsxSheet.isPrintGridlines() ).toBeFalse();
+	it( "can be removed", function(){
+		workbooks.Each( function( wb ){
+			s.addPrintGridLines( wb )
+				.removePrintGridLines( wb );
+			expect( s.getSheetHelper().getActiveSheet( wb ).isPrintGridlines() ).toBeFalse();
+		});
+	});
+
+	it( "addPrintGridLines and removePrintGridLines are chainable", function(){
+		workbooks.Each( function( wb ){
+			s.newChainable( wb ).addPrintGridLines();
+			expect( s.getSheetHelper().getActiveSheet( wb ).isPrintGridlines() ).toBeTrue();
+			s.newChainable( wb ).removePrintGridLines();
+			expect( s.getSheetHelper().getActiveSheet( wb ).isPrintGridlines() ).toBeFalse();
+		});
 	});
 
 });	

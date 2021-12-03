@@ -1,14 +1,14 @@
 component{
     // Module Properties
-    this.title = "LuceeSpreadsheet";
+    this.title = "Spreadsheet CFML";
     this.author = "Julian Halliwell";
-    this.webURL = "https://github.com/cfsimplicity/lucee-spreadsheet";
-    this.description = "Spreadsheet Library for Lucee";
-    this.version = "2.13.0";
+    this.webURL = "https://github.com/cfsimplicity/spreadsheet-cfml";
+    this.description = "CFML Spreadsheet Library";
+    this.version = "3.1.0";
     this.autoMapModels = false;
 
     function configure(){
-        binder.map( "Spreadsheet@lucee-spreadsheet" ).to( "#moduleMapping#.Spreadsheet" );
-        binder.map( "LuceeSpreadsheet" ).to( "#moduleMapping#.Spreadsheet" );
+        binder.map( "Spreadsheet@spreadsheet-cfml" ).to( "#moduleMapping#.Spreadsheet" );
+        binder.map( "Spreadsheet CFML" ).to( "#moduleMapping#.Spreadsheet" );
     }
 }

@@ -1,15 +1,14 @@
 <cfscript>
-describe( "newXls",function(){
+describe( "newXls", function(){
 
-	it( "Returns an HSSF workbook",function() {
+	it( "Returns an HSSF workbook", function(){
 		var workbook = s.newXls();
-		expect( workbook.getClass().name ).toBe( "org.apache.poi.hssf.usermodel.HSSFWorkbook" );
+		expect( s.isBinaryFormat( workbook ) ).toBeTrue();
 	});
 
-	it( "Creates a workbook with the specified sheet name",function() {
+	it( "Creates a workbook with the specified sheet name", function(){
 		var workbook = s.newXls( "test" );
-		makePublic( s,"getActiveSheetName" );
-		expect( s.getActiveSheetName( workbook ) ).toBe( "test" );
+		expect( s.getSheetHelper().getActiveSheetName( workbook ) ).toBe( "test" );
 	});
 
 });	

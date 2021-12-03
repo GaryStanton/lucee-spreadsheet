@@ -1,34 +1,45 @@
 <cfscript>
-describe( "formatRows",function(){
+describe( "formatRows", function(){
 
-	it( "can preserve the existing font properties when setting bold, color, font name, font size, italic, strikeout and underline", function(){
-		//setup
-		xls = s.new();
-		xlsx = s.newXlsx();
-		s.addRows( xls,  [ [ "a", "b" ], [ "c", "d" ] ], 1, 1 );
-		s.addRows( xlsx,  [ [ "a", "b" ], [ "c", "d" ] ], 1, 1 );
-		var format = { font: "Helvetica" };
-		s.formatRows( workbook=xls, format=format, range="1-2" );
-		s.formatRows( workbook=xlsx, format=format, range="1-2" );
-		//test
-		format = { bold: true };
-		s.formatRows( workbook=xls, format=format, range="1-2", overwriteCurrentStyle=false );
-		cellFormat = s.getCellFormat( xls, 1, 1 );
-		expect( cellFormat.font ).toBe( "Helvetica" );
-		s.formatRows( workbook=xlsx, format=format, range="1-2", overwriteCurrentStyle=false );
-		cellFormat = s.getCellFormat( xlsx, 1, 1 );
-		expect( cellFormat.font ).toBe( "Helvetica" );
-		//other properties already tested in formatCell
+	beforeEach( function(){
+		variables.workbooks = [ s.newXls(), s.newXlsx() ];
+		workbooks.Each( function( wb ){
+			s.addRows( wb, [ [ "a1", "b1" ], [ "a2", "b2" ] ] );
+		});
 	});
 
-	describe( "formatRows throws an exception if",function(){
+	it( "can preserve the existing format properties other than the one(s) being changed", function(){
+		workbooks.Each( function( wb ){
+			s.formatRows( wb, {  italic: true }, "1-2" );
+			expect( s.getCellFormat( wb, 1, 1 ).italic ).toBeTrue();
+			s.formatRows( wb, {  bold: true }, "1-2" ); //overwrites current style style by default
+			expect( s.getCellFormat( wb, 1, 1 ).italic ).toBeFalse();
+			s.formatRows( wb, {  italic: true }, "1-2" )
+				.formatRows( workbook=wb, format={ bold: true }, range="1-2", overwriteCurrentStyle=false );
+			expect( s.getCellFormat( wb, 1, 1 ).bold ).toBeTrue();
+			expect( s.getCellFormat( wb, 1, 1 ).italic ).toBeTrue();
+		});
+	});
 
-		it( "the range is invalid",function() {
-			expect( function(){
-				workbook = s.new();
-				format = { font="Courier" };
-				s.formatRows( workbook,format,"a-b" );
-			}).toThrow( regex="Invalid range" );
+	it( "is chainable", function() {
+		workbooks.Each( function( wb ){
+			s.newChainable( wb )
+				.formatRows( { bold: true }, "1-2" );
+			expect( s.getCellFormat( wb, 1, 1 ).bold ).toBeTrue();
+			expect( s.getCellFormat( wb, 2, 2 ).bold ).toBeTrue();
+		});
+	});
+
+	describe( "formatRows throws an exception if", function(){
+
+		it( "the range is invalid", function(){
+			var workbooks = [ s.newXls(), s.newXlsx() ];
+			workbooks.Each( function( wb ){
+				expect( function(){
+					var format = { font: "Courier" };
+					s.formatRows( wb, format, "a-b" );
+				}).toThrow( regex="Invalid range" );
+			});
 		});
 
 	});

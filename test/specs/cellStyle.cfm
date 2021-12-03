@@ -2,58 +2,60 @@
 describe( "cellStyle", function(){
 
 	beforeEach( function(){
-		variables.xls = s.newXls();
-		variables.xlsx = s.newXlsx();
+		variables.workbooks = [ s.newXls(), s.newXlsx() ];
 		variables.format = { bold: true };
 		variables.data = [ [ "x", "y" ] ];
 	});
 
 	it( "can return the total number of registered workbook cell styles", function(){
-		expect( s.getWorkbookCellStylesTotal( xls ) ).toBe( 21 );
-		expect( s.getWorkbookCellStylesTotal( xlsx ) ).toBe( 1 );
-		s.formatColumns( xls, format, 1 );
-		s.formatColumns( xlsx, format, 1 );
-		expect( s.getWorkbookCellStylesTotal( xls ) ).toBe( 22 );
-		expect( s.getWorkbookCellStylesTotal( xlsx ) ).toBe( 2 );
+		workbooks.Each( function( wb ){
+			var expected = s.isXmlFormat( wb )? 1: 21;
+			expect( s.getWorkbookCellStylesTotal( wb ) ).toBe( expected );
+			s.formatColumns( wb, format, 1 );
+			expected = s.isXmlFormat( wb )? 2: 22;
+			expect( s.getWorkbookCellStylesTotal( wb ) ).toBe( expected );
+		});
 	});
 
-	it( "can create a valid POI CellStyle object from a given format", function() {
-		makePublic( s, "isValidCellStyleObject" );
-		expect( s.isValidCellStyleObject( xls, s.createCellStyle( xls, format ) ) ).toBeTrue();
-		expect( s.isValidCellStyleObject( xlsx, s.createCellStyle( xlsx, format ) ) ).toBeTrue();
+	it( "createCellStyle is chainable", function(){
+		workbooks.Each( function( wb ){
+			var style = s.newChainable( wb ).createCellStyle( format );
+			expect( s.getFormatHelper().isValidCellStyleObject( wb, style ) ).toBeTrue();
+		});
+	});
+
+	it( "can create a valid POI CellStyle object from a given format", function(){
+		workbooks.Each( function( wb ){
+			expect( s.getFormatHelper().isValidCellStyleObject( wb, s.createCellStyle( wb, format ) ) ).toBeTrue();
+		});
 	});
 
 	it( "allows a single common cellStyle to be applied across multiple formatting calls and sheets", function(){
-		s.addRows( xls, data );
-		s.addRows( xlsx, data );
-		expect( s.getWorkbookCellStylesTotal( xls ) ).toBe( 21 );
-		expect( s.getWorkbookCellStylesTotal( xlsx ) ).toBe( 1 );
-		xlsStyle = s.createCellStyle( xls, format );
-		xlsxStyle = s.createCellStyle( xlsx, format );
-		s.formatCell( workbook=xls, row=1, column=1, cellStyle=xlsStyle );
-		s.formatCell( workbook=xls, row=1, column=2, cellStyle=xlsStyle );
-		s.formatCell( workbook=xlsx, row=1, column=1, cellStyle=xlsxStyle );
-		s.formatCell( workbook=xlsx, row=1, column=2, cellStyle=xlsxStyle );
-		s.createSheet( xls );
-		s.createSheet( xlsx );
-		s.setActiveSheetNumber( xls, 2 );
-		s.setActiveSheetNumber( xlsx, 2 );
-		s.addRows( xls, data );
-		s.addRows( xlsx, data );
-		s.formatCell( workbook=xls, row=1, column=1, cellStyle=xlsStyle );
-		s.formatCell( workbook=xls, row=1, column=2, cellStyle=xlsStyle );
-		s.formatCell( workbook=xlsx, row=1, column=1, cellStyle=xlsxStyle );
-		s.formatCell( workbook=xlsx, row=1, column=2, cellStyle=xlsxStyle );
-		expect( s.getWorkbookCellStylesTotal( xls ) ).toBe( 22 );
-		expect( s.getWorkbookCellStylesTotal( xlsx ) ).toBe( 2 );
+		workbooks.Each( function( wb ){
+			s.addRows( wb, data );
+			var expected = s.isXmlFormat( wb )? 1: 21;
+			expect( s.getWorkbookCellStylesTotal( wb ) ).toBe( expected );
+			var style = s.createCellStyle( wb, format );
+			s.formatCell( workbook=wb, row=1, column=1, cellStyle=style )
+				.formatCell( workbook=wb, row=1, column=2, cellStyle=style )
+				.createSheet( wb )
+				.setActiveSheetNumber( wb, 2 )
+				.addRows( wb, data )
+				.formatCell( workbook=wb, row=1, column=1, cellStyle=style )
+				.formatCell( workbook=wb, row=1, column=2, cellStyle=style );
+			expected = s.isXmlFormat( wb )? 2: 22;
+			expect( s.getWorkbookCellStylesTotal( wb ) ).toBe( expected );
+		});
 	});
 
 	describe( "format functions throw an exception if", function(){
 		
-		it( "the cellStyle argument is present but invalid", function() {
-			expect( function(){
-				s.formatCell( workbook=xls, row=1, column=1, cellStyle="not a cellStyle object" );
-			}).toThrow( regex="Invalid argument*" );
+		it( "the cellStyle argument is present but invalid", function(){
+			workbooks.Each( function( wb ){
+				expect( function(){
+					s.formatCell( workbook=wb, row=1, column=1, cellStyle="not a cellStyle object" );
+				}).toThrow( regex="Invalid argument*" );
+			});
 		});
 
 	});

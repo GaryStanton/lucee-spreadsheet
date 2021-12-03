@@ -1,14 +1,25 @@
 <cfscript>
-describe( "hideRow",function(){
+describe( "hideRow", function(){
+
+	beforeEach( function(){
+		var query = QueryNew( "column1,column2", "VarChar,VarChar", [ [ "a", "b" ], [ "c", "d" ] ] );
+		var xls = s.workbookFromQuery( query );
+		var xlsx = s.workbookFromQuery( data=query, xmlFormat=true );
+		variables.workbooks = [ xls, xlsx ];
+	});
 
 	it( "can hide a row", function(){
-		var query = QueryNew( "column1,column2", "VarChar,VarChar", [ [ "a","b" ], [ "c","d" ] ] );
-		var xls = s.workbookFromQuery( query );
-		s.hideRow( xls, 1 );
-		expect( s.isRowHidden( xls, 1 ) ).toBeTrue();
-		var xlsx = s.workbookFromQuery( data=query, xmlFormat=true );
-		s.hideRow( xlsx, 1 );
-		expect( s.isRowHidden( xlsx, 1 ) ).toBeTrue();
+		workbooks.Each( function( wb ){
+			s.hideRow( wb, 1 );
+			expect( s.isRowHidden( wb, 1 ) ).toBeTrue();
+		});
+	});
+
+	it( "is chainable", function(){
+		workbooks.Each( function( wb ){
+			s.newChainable( wb ).hideRow( 1 );
+			expect( s.isRowHidden( wb, 1 ) ).toBeTrue();
+		});
 	});
 
 });	

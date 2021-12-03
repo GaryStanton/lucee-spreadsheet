@@ -1,41 +1,58 @@
 <cfscript>
-describe( "formatColumn",function(){
+describe( "formatColumn", function(){
 
-	it( "can format a column containing more than 4009 rows",function(){
-		var path=getTestFilePath( "4010-rows.xls" );
-		var workbook=s.read( src=path );
-		var format={ italic="true" };
-		s.formatColumn( workbook,format,1 );
+	beforeEach( function(){
+		variables.workbooks = [ s.newXls(), s.newXlsx() ];
+		workbooks.Each( function( wb ){
+			s.addColumn( wb, [ "a1", "a2" ] );
+		});
 	});
 
-	it( "can preserve the existing font properties when setting bold, color, font name, font size, italic, strikeout and underline", function(){
-		//setup
-		xls = s.new();
-		xlsx = s.newXlsx();
-		s.addColumn( xls, "a,b" );
-		s.addColumn( xlsx, "a,b" );
-		var format = { font: "Helvetica" };
-		s.formatColumn( workbook=xls, format=format, column=1 );
-		s.formatColumn( workbook=xlsx, format=format, column=1 );
-		//test
-		format = { bold: true };
-		s.formatColumn( workbook=xls, format=format, column=1, overwriteCurrentStyle=false );
-		cellFormat = s.getCellFormat( xls, 1, 1 );
-		expect( cellFormat.font ).toBe( "Helvetica" );
-		s.formatColumn( workbook=xlsx, format=format, column=1, overwriteCurrentStyle=false );
-		cellFormat = s.getCellFormat( xlsx, 1, 1 );
-		expect( cellFormat.font ).toBe( "Helvetica" );
-		//other properties already tested in formatCell
+	it(
+		title="can format a column containing more than 4009 rows",
+		body=function(){
+			var path = getTestFilePath( "4010-rows.xls" );
+			var workbook = s.read( src=path );
+			var format = { italic: "true" };
+			s.formatColumn( workbook, format, 1 );
+		},
+		skip=function(){
+			return s.getIsACF();
+		}
+	);
+
+	it( "can preserve the existing format properties other than the one(s) being changed", function(){
+		workbooks.Each( function( wb ){
+			s.formatColumn( wb, { italic: true }, 1 );
+			expect( s.getCellFormat( wb, 1, 1 ).italic ).toBeTrue();
+			s.formatColumn( wb, { bold: true }, 1 ); //overwrites current style style by default
+			expect( s.getCellFormat( wb, 1, 1 ).italic ).toBeFalse();
+			s.formatColumn( wb, { italic: true }, 1 )
+				.formatColumn( workbook=wb, format={ bold: true }, column=1, overwriteCurrentStyle=false );
+			expect( s.getCellFormat( wb, 1, 1 ).bold ).toBeTrue();
+			expect( s.getCellFormat( wb, 1, 1 ).italic ).toBeTrue();
+		});
 	});
 
-	describe( "formatColumn throws an exception if",function(){
+	it( "is chainable", function(){
+		workbooks.Each( function( wb ){
+			s.newChainable( wb )
+				.formatColumn( { bold: true }, 1 );
+			expect( s.getCellFormat( wb, 1, 1 ).bold ).toBeTrue();
+			expect( s.getCellFormat( wb, 2, 1 ).bold ).toBeTrue();
+		});
+	});
 
-		it( "the column is 0 or below",function(){
-			expect( function(){
-				workbook = s.new();
-				format = { italic="true" };
-				s.formatColumn( workbook,format,0 );
-			}).toThrow( regex="Invalid column" );
+	describe( "formatColumn throws an exception if", function(){
+
+		it( "the column is 0 or below", function(){
+			var workbooks = [ s.newXls(), s.newXlsx() ];
+			workbooks.Each( function( wb ){
+				expect( function(){
+					var format = { italic="true" };
+					s.formatColumn( wb, format,0 );
+				}).toThrow( regex="Invalid column" );
+			});
 		});
 
 	});

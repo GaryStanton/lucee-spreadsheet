@@ -1,23 +1,35 @@
 <cfscript>
-describe( "removeSheetNumber",function(){
+describe( "removeSheetNumber", function(){
 
 	beforeEach( function(){
-		variables.workbook = s.new();
+		variables.workbooks = [ s.newXls(), s.newXlsx() ];
 	});
 
-	it( "Deletes the sheet number specified",function() {
-		s.createSheet( workbook,"test" );
-		s.removeSheetNumber( workbook,2 );
-		expect( workbook.getNumberOfSheets() ).toBe( 1 );
+	it( "Deletes the sheet number specified", function(){
+		workbooks.Each( function( wb ){
+			s.createSheet( wb, "test" )
+				.removeSheetNumber( wb, 2 );
+			expect( wb.getNumberOfSheets() ).toBe( 1 );
+		});
 	});
 
+	it( "Is chainable", function(){
+		workbooks.Each( function( wb ){
+			s.newChainable( wb )
+				.createSheet( "test" )
+				.removeSheetNumber( 2 );
+			expect( wb.getNumberOfSheets() ).toBe( 1 );
+		});
+	});
 
-	describe( "removeSheetNumber throws an exception if",function(){
+	describe( "removeSheetNumber throws an exception if", function(){
 
-		it( "the sheet number doesn't exist",function() {
-			expect( function(){
-				s.removeSheetNumber( workbook,20 );
-			}).toThrow( regex="Invalid sheet" );
+		it( "the sheet number doesn't exist", function(){
+			workbooks.Each( function( wb ){
+				expect( function(){
+					s.removeSheetNumber( wb, 20 );
+				}).toThrow( regex="Invalid sheet" );
+			});
 		});
 
 	});	
